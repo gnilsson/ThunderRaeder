@@ -1,0 +1,52 @@
+﻿@using Tewr.Blazor.FileReader
+@using System.Net.Http.Headers
+
+@implements IDisposable
+
+<div>
+    <label class="media-upload">
+        <input type="file" @ref="input" @onchange="HandleSelected" accept=".docx, .pdf" />
+        Upload
+        <MatIcon Style="margin-left:10px" Icon="arrow_upward"></MatIcon>
+    </label>
+    @if (success)
+    {
+        <MatIcon Icon="check_circle_outline"></MatIcon>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string FileUrl { get; set; }
+    [Parameter]
+    public EventCallback<Task<string>> OnChange { get; set; }
+    [Inject]
+    public IFileReaderService FileReaderService { get; set; }
+
+    private ElementReference input;
+    private bool success;
+
+    public void Dispose() => Interceptor.DisposeEvent();
+
+    private async Task HandleSelected()
+    {
+        Interceptor.RegisterEvent();
+        foreach (var file in await FileReaderService.CreateReference(input).EnumerateFilesAsync())
+        {
+            if (file == null)
+                return;
+
+            var fileInfo = await file.ReadFileInfoAsync();
+            using (var ms = await file.CreateMemoryStreamAsync(4 * 1024))
+            {
+                var content = new MultipartFormDataContent();
+                content.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data");
+                content.Add(new StreamContent(ms, Convert.ToInt32(ms.Length)), "document", fileInfo.Name);
+                var request = await Http.PostAsync(ApiRoutes.Media.Add, content);
+                success = request.IsSuccessStatusCode;
+                var response = request.Content.ReadAsStringAsync();
+                await OnChange.InvokeAsync(response);
+            }
+        }
+    }
+}

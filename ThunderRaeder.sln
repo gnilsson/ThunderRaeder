@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29728.190
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThunderRaeder.API", "ThunderRaeder.API\ThunderRaeder.API.csproj", "{436C3323-9F89-4B82-8681-29811D7F5553}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThunderRaeder.Data", "ThunderRaeder.Data\ThunderRaeder.Data.csproj", "{6B16983C-EAF7-43D8-AC5B-5BB3020AFA43}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThunderRaeder.Identity.API", "ThunderRaeder.Identity.API\ThunderRaeder.Identity.API.csproj", "{135E1BFD-338A-431B-9027-37B5CC638251}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThunderRaeder.Utility", "ThunderRaeder.Utility\ThunderRaeder.Utility.csproj", "{DB0615C6-6421-4263-9805-7135B35BBDCF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThunderRaeder.Client", "ThunderRaeder.Client\ThunderRaeder.Client.csproj", "{F840D719-04AA-4D9F-AE3A-360073D0B2C5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThunderRaeder.Shared", "ThunderRaeder.Shared\ThunderRaeder.Shared.csproj", "{DCDFBF05-82B0-4EFF-AF15-88BFADD90823}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{436C3323-9F89-4B82-8681-29811D7F5553}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{436C3323-9F89-4B82-8681-29811D7F5553}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{436C3323-9F89-4B82-8681-29811D7F5553}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{436C3323-9F89-4B82-8681-29811D7F5553}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B16983C-EAF7-43D8-AC5B-5BB3020AFA43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B16983C-EAF7-43D8-AC5B-5BB3020AFA43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B16983C-EAF7-43D8-AC5B-5BB3020AFA43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B16983C-EAF7-43D8-AC5B-5BB3020AFA43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{135E1BFD-338A-431B-9027-37B5CC638251}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{135E1BFD-338A-431B-9027-37B5CC638251}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{135E1BFD-338A-431B-9027-37B5CC638251}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{135E1BFD-338A-431B-9027-37B5CC638251}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB0615C6-6421-4263-9805-7135B35BBDCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB0615C6-6421-4263-9805-7135B35BBDCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB0615C6-6421-4263-9805-7135B35BBDCF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB0615C6-6421-4263-9805-7135B35BBDCF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F840D719-04AA-4D9F-AE3A-360073D0B2C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F840D719-04AA-4D9F-AE3A-360073D0B2C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F840D719-04AA-4D9F-AE3A-360073D0B2C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F840D719-04AA-4D9F-AE3A-360073D0B2C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCDFBF05-82B0-4EFF-AF15-88BFADD90823}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCDFBF05-82B0-4EFF-AF15-88BFADD90823}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCDFBF05-82B0-4EFF-AF15-88BFADD90823}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCDFBF05-82B0-4EFF-AF15-88BFADD90823}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {306DD563-26FE-418D-B3D2-CF32132D5ABA}
+	EndGlobalSection
+EndGlobal

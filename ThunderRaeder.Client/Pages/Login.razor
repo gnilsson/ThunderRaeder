@@ -1,0 +1,65 @@
+﻿@page "/login"
+
+
+@implements IDisposable
+
+<h1>Login</h1>
+
+@if (ShowErrors)
+{
+    <div class="alert alert-danger" role="alert">
+        <p>@Errors.FirstOrDefault()</p>
+    </div>
+}
+
+<div class="card list" style="width:50%">
+    <div class="card-body">
+        <h5 class="card-title">Please enter your details</h5>
+        <EditForm Model="loginRequest" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <MatTextField @bind-Value="loginRequest.Email" Required="true" Label="Email address"
+                              Outlined="true" Style="width:90%"></MatTextField>
+                <ValidationMessage For="@(() => loginRequest.Email)" />
+            </div>
+            <div class="form-group">
+                <MatTextField @bind-Value="loginRequest.Password" Required="true" Label="Password"
+                              Outlined="true" Style="width:90%" Type="password"></MatTextField>
+                <ValidationMessage For="@(() => loginRequest.Password)" />
+            </div>
+            <div class="form-group" style="text-align:center">
+                <MatButton Type="submit" Raised="true">Submit</MatButton>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+
+    private UserLoginRequest loginRequest = new UserLoginRequest();
+    private bool ShowErrors;
+    private IEnumerable<string> Errors;
+
+    protected override void OnInitialized() => Interceptor.RegisterEvent();
+
+    private async Task HandleLogin()
+    {
+        ShowErrors = false;
+
+        var result = await AuthService.Login(loginRequest);
+
+        if (result.Success)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            Errors = result.Errors;
+            ShowErrors = true;
+        }
+    }
+
+    public void Dispose() => Interceptor.DisposeEvent();
+
+}

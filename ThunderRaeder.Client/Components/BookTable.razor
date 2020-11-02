@@ -1,0 +1,147 @@
+﻿
+@if (BooksData == null)
+{
+    <span>
+        loading books...
+    </span>
+}
+else
+{
+    <div class="container list">
+        <MatTable Items="@BooksData" Class="mat-elevation-z5" AllowSelection="true"
+                  SelectionChanged="SelectionChangedEvent" PageSize="@PageSize"
+                  ShowFooter="true" ShowPaging="false">
+            <MatTableHeader>
+                <th class="h-select" @onclick="OrderByTitle">Title</th>
+                <th class="h-select" @onclick="OrderByGenre">Genre</th>
+                <th class="h-select" @onclick="OrderByAuthor">Author</th>
+                <th class="h-select" @onclick="OrderByUpdate">Last Modified</th>
+            </MatTableHeader>
+            <MatTableRow>
+                <td>@context.Title</td>
+                <td>@context.Genre</td>
+                <td>@context.Author.GetFullname()</td>
+                <td>@context.UpdatedDate</td>
+            </MatTableRow>
+        </MatTable>
+        @if (selectedBook != null)
+        {
+            <div class="container list">
+                <MatDialog @bind-IsOpen="@dialogIsOpen">
+                    <MatDialogTitle>
+                        @selectedBook.Title
+                    </MatDialogTitle>
+                    <MatDialogContent>
+                        <p class="oi-bold">@selectedBook.Genre</p>
+                        <p>@selectedBook.Description</p>
+                        <p class="oi-italic">@selectedBook.Author.GetFullname()</p>
+                    </MatDialogContent>
+                    <MatDialogActions>
+                        <MatButton @onclick="NavigateToBookUnit">
+                            Go to page
+                            <MatIcon Icon="open_in_browser"></MatIcon>
+                        </MatButton>
+                        <MatButton @onclick="NavigateToUpdateBook">
+                            Update
+                            <MatIcon Icon="update"></MatIcon>
+                        </MatButton>
+                        <div class="@viewFileCss">
+                            <MatButton @onclick="NavigateToFilePath">
+                                View
+                                <MatIcon Icon="find_in_page"></MatIcon>
+                            </MatButton>
+                        </div>
+                    </MatDialogActions>
+                </MatDialog>
+            </div>
+        }
+
+    </div>
+}
+
+@code {
+    [Parameter]
+    public IEnumerable<BookResponse> BooksData { get; set; }
+    [Parameter]
+    public int PageSize { get; set; }
+    [Parameter]
+    public Action<string, bool> OrderState { get; set; }
+
+    public string ClickedId { get; set; }
+
+    private BookResponse selectedBook;
+    private bool dialogIsOpen = false;
+    private string viewFileCss => string.IsNullOrWhiteSpace(selectedBook.DriveId) ? "collapse" : null;
+    private bool orderIsDescending = false;
+    private string orderState = string.Empty;
+
+    public void SelectionChangedEvent(object row)
+    {
+        if (row != null)
+        {
+            selectedBook = (BookResponse)row;
+            dialogIsOpen = true;
+        }
+        this.StateHasChanged();
+    }
+
+    public async Task NavigateToFilePath()
+    {
+        if (selectedBook.DriveId != null)
+        {
+            var media = await Http.GetAsync(ApiRoutes.Media.Get.Replace("{driveId}", selectedBook.DriveId));
+            var driveItem = await media.Content.ReadAsStringAsync().ToSingleObjectAsync<DriveItemResponse>();
+            NavigationManager.NavigateTo(driveItem.WebUrl);
+        }
+    }
+
+    private void NavigateToUpdateBook()
+    {
+        NavigationManager.NavigateTo($"/books/add/{selectedBook.Id.ToShortString()}");
+    }
+
+    private void NavigateToBookUnit()
+    {
+        NavigationManager.NavigateTo($"/books/{selectedBook.Id.ToShortString()}");
+    }
+
+    private void OrderBy(string parameter)
+    {
+        if (orderState != parameter)
+        {
+            orderState = parameter;
+            orderIsDescending = false;
+        }
+        OrderState.Invoke(orderState, orderIsDescending);
+        orderIsDescending = !orderIsDescending;
+    }
+
+    private void OrderByUpdate()
+    {
+        OrderBy(QueryString.UpdatedDate);
+        BooksData = orderIsDescending ?
+        BooksData.OrderBy(o => o.UpdatedDate) :
+        BooksData.OrderByDescending(o => o.UpdatedDate);
+    }
+    private void OrderByTitle()
+    {
+        OrderBy(QueryString.Title);
+        BooksData = orderIsDescending ?
+        BooksData.OrderBy(o => o.Title) :
+        BooksData.OrderByDescending(o => o.Title);
+    }
+    private void OrderByGenre()
+    {
+        OrderBy(QueryString.Genre);
+        BooksData = orderIsDescending ?
+        BooksData.OrderBy(o => o.Genre) :
+        BooksData.OrderByDescending(o => o.Genre);
+    }
+    private void OrderByAuthor()
+    {
+        OrderBy(QueryString.Author);
+        BooksData = orderIsDescending ?
+        BooksData.OrderBy(o => o.Author.LastName) :
+        BooksData.OrderByDescending(o => o.Author.LastName);
+    }
+}

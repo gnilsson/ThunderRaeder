@@ -1,0 +1,18 @@
+﻿
+<h3>Book</h3>
+
+@if(Book != null)
+{
+    <h1>book id: @Book.Id</h1>
+    <p>@Book.Description</p>
+    <p>@driveId</p>
+}
+
+
+
+@code {
+    [Parameter] 
+    public BookResponse Book { get; set; }
+
+    private string driveId => Book.DriveId ?? string.Empty;
+}

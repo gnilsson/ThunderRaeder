@@ -1,0 +1,39 @@
+﻿@using System.Net.Http
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.WebAssembly.Http
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Microsoft.JSInterop
+@using ThunderRaeder.Client
+@using ThunderRaeder.Client.Shared
+@using Microsoft.AspNetCore.Components.Authorization
+@using MatBlazor
+@using ThunderRaeder.Client.Authentication
+@using ThunderRaeder.Client.Components
+@using ThunderRaeder.Client.Components.Authors
+@using ThunderRaeder.Client.Components.Books
+@using ThunderRaeder.Shared.ServerApiContracts.Responses.Wrappers
+@using ThunderRaeder.Shared.ServerApiContracts.Responses
+@using ThunderRaeder.Shared.ServerApiContracts.ExtResponses
+@using ThunderRaeder.Shared.ServerApiContracts
+@using ThunderRaeder.Client.Util
+@using ThunderRaeder.Shared.ServerApiContracts.Requests
+@using ThunderRaeder.Shared.Enums
+@using System.Text.Json
+@using ThunderRaeder.Client.Models
+@using System.Text
+@using ThunderRaeder.Client.Models.PostRequests
+@using ThunderRaeder.Client.Pages.Books
+@using ThunderRaeder.Client.Descriptive
+@using ThunderRaeder.Shared.Authentication
+@using ThunderRaeder.Client.HttpClients
+@using ThunderRaeder.Client.Services
+
+
+@inject ApiAuthenticationStateProvider AuthState
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@inject IAuthService AuthService
+@inject HttpInterceptorService Interceptor

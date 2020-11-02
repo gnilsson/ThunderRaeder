@@ -1,0 +1,124 @@
+﻿
+.bg_wrap {
+    position: relative;
+    background: rgba(128, 128, 128,0.5);
+    overflow: hidden;
+    height: 94.2%;
+    width: 100%;
+}
+
+    .bg_wrap:before {
+        content: ' ';
+        display: block;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        opacity: 0.6;
+        background-image: url(/img/bookshelfdark.jpg);
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+    }
+
+    .bg_wrap h1 {
+        padding: 50px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .bg_wrap div {
+        z-index: 2;
+    }
+
+.mdc-dialog--open .mdc-dialog__scrim {
+    z-index: 1;
+}
+
+.content {
+    z-index: 1;
+}
+
+.big_text {
+    font-size: 30px;
+    font-style: oblique;
+}
+
+.list {
+    background-color: beige;
+    margin-top: 1%;
+    z-index: 1;
+    border-radius: 10px;
+}
+
+.beige {
+    background-color: beige;
+}
+
+.antique {
+    background-color: antiquewhite;
+}
+
+/*    .inner div {
+        background-color: antiquewhite;
+        border-radius: 15px;
+    }*/
+
+.mdc-select:not(.mdc-select--disabled) .mdc-select__anchor {
+    background-color: antiquewhite !important;
+    border-radius: 15px;
+}
+
+.mdc-text-field--filled:not(.mdc-text-field--disabled) {
+    background-color: antiquewhite !important;
+    border-radius: 15px;
+}
+
+.mat-paginator .mat-paginator-container {
+    background-color: beige;
+}
+
+.form-group input {
+    background-color: beige;
+    color: black;
+    border-radius: 10px;
+    border-bottom: 2px;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.media-upload {
+    border: 1px solid #ccc;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+    background-color: antiquewhite;
+    border-radius: 5px;
+    border-color: #6200ee;
+    color: dimgray
+}
+
+.view-pos {
+    position: relative;
+    z-index: 1;
+}
+
+.click {
+    cursor: pointer;
+}
+
+.h-select {
+    cursor: pointer;
+}
+
+.mdc-table th {
+    cursor: pointer;
+}
+
+    .mdc-table th::selection {
+        border-bottom: 2px solid !important;
+    }

@@ -1,0 +1,23 @@
+﻿
+@inject SignOutSessionStateManager SignOutManager
+
+<AuthorizeView>
+    <Authorized>
+        @*Hello @context.User.Claims.Single(x => x.Type == "emailid").Value*@
+        <MatButton Class="nav-link btn btn-link ml-md-auto" @onclick="BeginSignOut">Log out</MatButton>
+    </Authorized>
+    <NotAuthorized>
+        <MatButton Style="padding-right: 4em" @onclick="(() => NavigationManager.NavigateTo(IdentityActions.Register))">Register</MatButton>
+        <MatButton Style="padding-right: 4em" @onclick="(() => NavigationManager.NavigateTo(IdentityActions.Login))">Login</MatButton>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code{
+    private async Task BeginSignOut(MouseEventArgs args)
+    {
+  //      var a = context.User.Claims.Single(x => x.Type == "emailid").Value;
+
+        await SignOutManager.SetSignOutState();
+        NavigationManager.NavigateTo("/logout");
+    }
+}

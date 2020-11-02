@@ -1,0 +1,65 @@
+﻿
+<section class="section-pagetop bg">
+    <div class="container">
+        <h2 class="title-page text-center">Add Author</h2>
+    </div>
+</section>
+
+<section class="section-content padding-y bg">
+    <div class="container">
+        <div class="card mx-auto list">
+            <article class="card-body">
+
+                <EditForm Model="@createAuthor" OnValidSubmit="@HandleValidSubmitAsync">
+                    <div class="form-group">
+                        <p>
+                            <MatTextField @bind-Value="@createAuthor.Firstname" Required="true" Label="Firstname"
+                                          Style="width:100%" Outlined="true"></MatTextField>
+                            <ValidationMessage For="@(() => createAuthor.Firstname)" />
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <p>
+                            <MatTextField @bind-Value="@createAuthor.Lastname" Required="true" Label="Lastname"
+                                          Style="width:100%" Outlined="true"></MatTextField>
+                            <ValidationMessage For="@(() => createAuthor.Lastname)" />
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <MatSelectItem @bind-Value="@createAuthor.Gender" Items="@genderItems" Label="Gender">
+                        </MatSelectItem>
+                        <ValidationMessage For="@(() => createAuthor.Gender)" />
+                    </div>
+                    <div class="form-group" style="text-align:center">
+                        <MatButton Type="submit" Raised="true">Submit</MatButton>
+                    </div>
+                </EditForm>
+
+            </article>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public Action<string> OnAuthorSubmitted { get; set; }
+
+    private CreateAuthorRequestModel createAuthor;
+    private Gender[] genderItems;
+
+    protected override void OnInitialized() =>  LoadData();
+
+    private void LoadData()
+    {
+        createAuthor = new CreateAuthorRequestModel();
+        genderItems = Enum.GetValues(typeof(Gender)).Cast<Gender>().ToArray();
+    }
+
+    private async Task HandleValidSubmitAsync()
+    {
+        IPostRequest<ModifyAuthorRequest> postRequest = createAuthor;
+        var result = await Http.PostAsync(ApiRoutes.Authors.Create, postRequest.ToStringContent());
+        var response = await result.Content.ReadAsStringAsync();
+        OnAuthorSubmitted?.Invoke(response);
+    }
+}

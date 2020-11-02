@@ -1,0 +1,36 @@
+﻿@page "/books/{bookId}"
+<AuthorizeView>
+    <Authorized>
+        @if (bookResponse != null)
+        {
+            <BookUnit Book="bookResponse" />
+        }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+    [Parameter]
+    public string BookId { get; set; }
+
+    private BookResponse bookResponse;
+
+    protected async override Task OnInitializedAsync() => await LoadDataAsync();
+
+    private async Task LoadDataAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        if (!authState.User.Identity.IsAuthenticated)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(BookId))
+        {
+            var response = await Http.GetAsync(
+        ApiRoutes.Books.GetById.Replace("{bookId}", BookId.FromShortString()));
+            bookResponse = await response.Content
+                .ReadAsStringAsync()
+                .ToSingleObjectAsync<BookResponse>();
+        }
+    }
+}

@@ -1,0 +1,158 @@
+﻿
+@if (!(authorResponse?.Total > 0))
+{
+    <p>loading..</p>
+}
+else
+{
+    <section class="section-pagetop bg">
+        <div class="container">
+            <span class="view-pos click">
+                <MatIcon Icon="arrow_back" @onclick="NavigateToLibrary"></MatIcon>
+            </span>
+            <h2 class="title-page text-center view-pos">Add Book</h2>
+        </div>
+    </section>
+    <div>
+        <section class="section-content padding-y bg">
+            <div class="container">
+                <div class="card mx-auto list">
+                    <article class="card-body">
+                        <EditForm Model="@createBook" OnValidSubmit="@HandleValidSubmitAsync">
+
+                            <div class="form-group">
+                                <p>
+                                    <MatTextField @bind-Value="@createBook.Title" Required="true" Label="Title"
+                                                  Style="width:100%" Outlined="true"></MatTextField>
+                                    <ValidationMessage For="@(() => createBook.Title)" />
+                                </p>
+                            </div>
+                            <div class="form-group">
+                                <p>
+                                    <MatTextField @bind-Value="@createBook.Description" Required="true" Label="Description"
+                                                  Style="width:100%" TextArea="true" Outlined="true"></MatTextField>
+                                    <ValidationMessage For="@(() => createBook.Description)" />
+                                </p>
+                            </div>
+                            <div class="form-group">
+                                <MatSelectItem @bind-Value="@createBook.Genre" Items="@genreItems" Style="width:100%" Label="Genre"></MatSelectItem>
+                                <ValidationMessage For="@(() => createBook.Genre)" />
+                            </div>
+                            <div class="form-group">
+                                <div class="form-row">
+                                    <MatAutocompleteList @bind-Value="@createBook.SelectedAuthor" Items="@createBook.AuthorOptions"
+                                                         ShowClearButton="true" Label="Select Author" Style="width:100%" TItem="AuthorResponse"
+                                                         CustomStringSelector="@(i => i != null ? i.GetFullname() : string.Empty)"
+                                                         OnOpenedChanged="((e) => uploadInvisible = e)">
+                                    </MatAutocompleteList>
+                                    <ValidationMessage For="@(() => createBook.SelectedAuthor)" />
+                                </div>
+                                <div class="form-row">
+                                    <MatButton @onclick="(() => OnAuthorFormClick?.Invoke())" Raised="true">New author</MatButton>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <div class="col-md-10 @uploadCssVisible">
+                                    <MediaUpload OnChange="AssignDriveItem" />
+                                </div>
+                                @*@if (!string.IsNullOrWhiteSpace(createBook.DriveId))
+                                    {
+                                        <span><MatIcon Icon="check_circle_outline"></MatIcon></span>
+                                        <p>@createBook.DriveId</p>
+
+                                    }*@
+                            </div>
+                            <div class="form-group" style="text-align:center">
+                                <MatButton Type="submit" Raised="true">Submit</MatButton>
+                            </div>
+                        </EditForm>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </div>
+
+}
+
+
+@code {
+    [CascadingParameter]
+    public AuthorResponse CreatedAuthor { get; set; }
+    [Parameter]
+    public Task<PagedResponse<AuthorResponse>> AuthorResponseTask { get; set; }
+    [Parameter]
+    public Action<string> OnBookSubmitted { get; set; }
+    [Parameter]
+    public Action OnAuthorFormClick { get; set; }
+    [Parameter]
+    public Task<BookResponse> BookResponseTask { get; set; }
+
+    private CreateBookRequestModel createBook;
+    private Genre[] genreItems;
+    private PagedResponse<AuthorResponse> authorResponse;
+    private bool authorFormVisible = false;
+    private string driveId;
+    private bool uploadInvisible = false;
+    private string uploadCssVisible => uploadInvisible ? "collapse" : string.Empty;
+    private string updateId;
+
+    protected override async Task OnInitializedAsync() => await LoadDataAsync();
+
+    private async Task LoadDataAsync()
+    {
+        authorResponse = await AuthorResponseTask;
+        createBook = new CreateBookRequestModel
+        {
+            AuthorOptions = authorResponse.Data
+        };
+        genreItems = Enum.GetValues(typeof(Genre)).Cast<Genre>().ToArray();
+        if (CreatedAuthor != null)
+        {
+            createBook.AuthorOptions = new List<AuthorResponse> { CreatedAuthor };
+            createBook.SelectedAuthor = CreatedAuthor;
+        }
+
+        if (BookResponseTask != null)
+        {
+            var bookResponse = await BookResponseTask;
+            updateId = bookResponse.Id;
+            createBook.Title = bookResponse.Title;
+            createBook.Description = bookResponse.Description;
+            createBook.Genre = (Genre)Enum.Parse(typeof(Genre), bookResponse.Genre.ToString());
+            var author = authorResponse.Data.FirstOrDefault(x => x.Id == bookResponse.Author.Id);
+            if (author == null)
+            {
+                var result = await Http.GetAsync(ApiRoutes.Authors.GetById.Replace("{authorId}", bookResponse.Author.Id));
+                author = await result.Content.ReadAsStringAsync().ToSingleObjectAsync<AuthorResponse>();
+            }
+            createBook.SelectedAuthor = author;
+            createBook.DriveId = bookResponse.DriveId;
+        }
+    }
+
+    private async Task HandleValidSubmitAsync()
+    {
+        IPostRequest<ModifyBookRequest> postRequest = createBook;
+
+        var result = string.IsNullOrWhiteSpace(updateId) ?
+            await Http.PostAsync(ApiRoutes.Books.Create,
+            postRequest.ToStringContent()) :
+            await Http.PutAsync(ApiRoutes.Books.Update.Replace("{bookId}", updateId),
+            postRequest.ToStringContent());
+
+        var response = await result.Content.ReadAsStringAsync();
+        OnBookSubmitted?.Invoke(response);
+    }
+
+    private async Task AssignDriveItem(Task<string> item)
+    {
+        var driveItem = await item.ToSingleObjectAsync<DriveItemResponse>();
+        createBook.DriveId = driveItem.Id;
+    }
+
+    private void NavigateToLibrary()
+    {
+        Console.WriteLine("nav");
+        NavigationManager.NavigateTo("/library");
+    }
+}

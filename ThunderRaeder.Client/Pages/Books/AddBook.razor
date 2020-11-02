@@ -1,0 +1,100 @@
+﻿@page "/books/add"
+@page "/books/add/{bookId}"
+
+<div>
+
+</div>
+
+@if (authorFormVisible)
+{
+    <span class="view-pos click">
+        <MatIcon Icon="arrow_back" @onclick="(() => authorFormVisible=false)"></MatIcon>
+    </span>
+    <div class="container">
+        <CascadingValue Value="AuthorJsonString">
+            <CreateAuthor OnAuthorSubmitted="SetCreatedAuthor">
+            </CreateAuthor>
+        </CascadingValue>
+    </div>
+}
+else
+{
+    <div class="container">
+        <CascadingValue Value="BookJsonString">
+            <CascadingValue Value="createdAuthor">
+                <CreateBook OnBookSubmitted="SetCreatedBook"
+                            AuthorResponseTask="@authorResponseTask"
+                            OnAuthorFormClick="SetAuthorFormVisible"
+                            BookResponseTask="@BookResponseTask">
+                </CreateBook>
+            </CascadingValue>
+        </CascadingValue>
+    </div>
+}
+
+<div>
+</div>
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    [Parameter]
+    public string BookId { get; set; }
+
+    public Task<BookResponse> BookResponseTask { get; private set; }
+    public string BookJsonString { get; private set; }
+    public string AuthorJsonString { get; private set; }
+    public bool AuthorFormVisible { get; private set; }
+
+    private string resultJson = string.Empty;
+    private Task<PagedResponse<AuthorResponse>> authorResponseTask;
+    private bool authorFormVisible = false;
+    private AuthorResponse createdAuthor;
+
+    protected override async Task OnInitializedAsync() => await LoadDataAsync();
+
+    private async Task<BookResponse> GetBook()
+    {
+        var response = await Http.GetAsync(ApiRoutes.Books.GetById.Replace("{bookId}", BookId.FromShortString()));
+        return await response.Content.ReadAsStringAsync().ToSingleObjectAsync<BookResponse>();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        if (!authState.User.Identity.IsAuthenticated)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(BookId))
+        {
+            BookResponseTask = GetBook();
+        }
+
+        authorResponseTask = Http.GetJsonAsync<PagedResponse<AuthorResponse>>(
+            ApiRoutes.Authors.Get.AppendPaginationQuery(new PaginationData { PageSize = 10 }));
+    }
+
+    public void SetCreatedAuthor(string selectedAuthorString)
+    {
+        var author = selectedAuthorString.ToSingleObject<AuthorResponse>();
+        authorFormVisible = false;
+        resultJson = $"{author.GetFullname()} created\n";
+        StateHasChanged();
+    }
+
+    public void SetCreatedBook(string selectedBookString)
+    {
+        var book = selectedBookString.ToSingleObject<BookResponse>();
+        resultJson = $"{book.Title} created\n";
+        StateHasChanged();
+        NavigationManager.NavigateTo("/library");
+    }
+
+    public void SetAuthorFormVisible()
+    {
+        authorFormVisible = true;
+        StateHasChanged();
+    }
+}

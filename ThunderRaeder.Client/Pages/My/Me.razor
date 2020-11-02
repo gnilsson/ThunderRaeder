@@ -1,0 +1,94 @@
+﻿@page "/me"
+
+@implements IDisposable
+
+<AuthorizeView>
+    <Authorized>
+        <div class="container">
+            <div class="card list">
+                @if (me == null)
+                {
+                    <p>Loading..</p>
+                }
+                else
+                {
+                    @if (accountStatus == AccountStatus.Verified)
+                    {
+                        <h1>Wecome @displayName!</h1>
+                        <h1>@validatedMessage</h1>
+                    }
+                    else
+                    {
+                        <p style="color:red">You're not verified</p>
+                    }
+                }
+                @if (notValidated)
+                {
+                    <p>You are not validated</p>
+                    <MatButton @onclick="Validate" Label="Validate"></MatButton>
+                }
+            </div>
+        </div>
+        
+    </Authorized>
+    <NotAuthorized>
+        <h1>You don't have access</h1>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    private AccountStatus accountStatus = AccountStatus.None;
+    private UserResponse me;
+    private string displayName = string.Empty;
+    private string validatedMessage = string.Empty;
+    private bool notValidated = false;
+
+    public void Dispose() => Interceptor.DisposeEvent();
+
+    protected override async Task OnInitializedAsync() => await LoadDataAsync();
+
+    private async Task LoadDataAsync()
+    {
+        var authState = await authenticationStateTask;
+
+        if (!authState.User.Identity.IsAuthenticated)
+            return;
+
+        Interceptor.RegisterEvent();
+        var response = await Http.GetAsync(ApiRoutes.Me.Get);
+        if (response != null)
+        {
+            await SetCurrentUser(response);
+        }
+        else
+        {
+            notValidated = true;
+        }
+    }
+
+    private async Task SetCurrentUser(HttpResponseMessage response)
+    {
+        me = await response.Content
+            .ReadAsStringAsync()
+            .ToSingleObjectAsync<UserResponse>();
+        accountStatus = Enum.Parse<AccountStatus>(me.AccountStatus);
+        displayName = string.IsNullOrWhiteSpace(me.Alias) ? me.Username : me.Alias;
+    }
+
+    private async Task Validate()
+    {
+        IPostRequest<ModifyUserRequest> request = new CreateUserRequestModel();
+        var createdResponse = await Http.PostAsync(ApiRoutes.Users.Create, request.ToStringContent());
+        if (createdResponse.IsSuccessStatusCode)
+        {
+            await SetCurrentUser(createdResponse);
+            validatedMessage = "You're now validated!";
+            notValidated = false;
+        }
+    }
+
+}

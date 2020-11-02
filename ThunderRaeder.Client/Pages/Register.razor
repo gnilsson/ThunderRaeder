@@ -1,0 +1,78 @@
+﻿@page "/register"
+
+<h1>Register</h1>
+
+@if (ShowErrors)
+{
+    <div class="alert alert-danger" role="alert">
+        @foreach (var error in Errors)
+        {
+            <p>@error</p>
+        }
+    </div>
+}
+
+<div class="card list" style="width:50%">
+    <div class="card-body">
+        <h5 class="card-title">Please enter your details</h5>
+        <EditForm Model="userRegistrationRequest" OnValidSubmit="HandleRegistration">
+            <DataAnnotationsValidator />
+            <div class="form-group">
+                <MatTextField @bind-Value="userRegistrationRequest.Email" Required="true" Label="Email address"
+                              Outlined="true" Style="width:90%"></MatTextField>            
+                    <ValidationMessage For="@(() => userRegistrationRequest.Email)" />
+                        </div>
+            <div class="form-group">
+                <MatTextField @bind-Value="userRegistrationRequest.Password" Required="true" Label="Password"
+                               Outlined="true" Style="width:90%" Type="password"></MatTextField>
+                <ValidationMessage For="@(() => userRegistrationRequest.Password)" />
+            </div>
+            <div class="form-group">
+                <MatTextField @bind-Value="userRegistrationRequest.ConfirmPassword" Required="true" Label="Confirm Password"
+                               Outlined="true" Style="width:90%" Type="password"></MatTextField>
+                <ValidationMessage For="@(() => userRegistrationRequest.ConfirmPassword)" />
+
+            </div>
+            <div class="form-group" style="text-align:center">
+                <MatButton Type="submit" Raised="true">Submit</MatButton>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private UserRegistrationRequest userRegistrationRequest = new UserRegistrationRequest();
+    private bool ShowErrors = false;
+    private IEnumerable<string> Errors;
+
+    private async Task HandleRegistration()
+    {
+        ShowErrors = false;
+        var result = await AuthService.Register(userRegistrationRequest);
+        if (result.Success)
+        {
+            IPostRequest<ModifyUserRequest> request = new CreateUserRequestModel(); //{ Email = UserRegistrationRequest.Email };
+            var userResult = await Http.PostAsync(ApiRoutes.Users.Create, request.ToStringContent());
+            if (userResult.IsSuccessStatusCode)
+            {
+                var response = await userResult.Content.ReadFromJsonAsync<Response<UserResponse>>();
+                //   if (response.Data.)
+            }
+            else
+            {
+                IPostRequest<InviteUserRequest> inviteRequest = new InviteUserRequestModel
+                {
+                    InvitedUserEmailAddress = userRegistrationRequest.Email,
+                    InviteRedirectUrl = $"{NavigationManager.BaseUri}/me"
+                };
+                var inviteResult = await Http.PostAsync(ApiRoutes.Users.Invite, inviteRequest.ToStringContent());
+            }
+            NavigationManager.NavigateTo(IdentityActions.Login);
+        }
+        else
+        {
+            Errors = result.Errors;
+            ShowErrors = true;
+        }
+    }
+}

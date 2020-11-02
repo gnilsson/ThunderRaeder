@@ -1,0 +1,209 @@
+﻿@page "/library"
+
+@using System.Collections.Concurrent
+@implements IDisposable
+
+<AuthorizeView>
+    <Authorized>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-10">
+                    <MatTextField ValueChanged="@OnSearch" Label="Search">
+                        <MatIcon Icon="search" @onclick="HandleSearch"></MatIcon>
+                    </MatTextField>
+                </div>
+                <div class="col-md-2">
+                    <MatButton @onclick="NavigateToAddBook">Add new book</MatButton>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <BookTable BooksData="booksData"
+                               PageSize="pageSize"
+                               OrderState="GetOrderState" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col list">
+                    <MatPaginator Style="background-color:beige"
+                                  Length="bookResponse?.Total ?? pageSize"
+                                  PageSize="@pageSize"
+                                  Page="@OnPage"
+                                  PageSizeOptions="pageSizeOptions">
+                    </MatPaginator>
+                    <div>
+                        <p></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <h1>401</h1>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthenticationStateTask { get; set; }
+
+    private const int TableStartViewCount = 5;
+    private const int MaxPageSizeOption = 15;
+
+    private PagedResponse<BookResponse> bookResponse;
+    private IEnumerable<BookResponse> booksData;
+    private List<MatPageSizeOption> pageSizeOptions;
+    private ConcurrentDictionary<string, PagedResponse<BookResponse>> cache;
+    private List<BookResponse> tempBooks;
+    private int pageSize;
+    private int pageIndex;
+    private int localOffset;
+    private int last;
+    private string query = string.Empty;
+    private string queryString = string.Empty;
+    private (string, bool)? orderState;
+    private Action<string> OnSearch => async (e) => await OnSearchValue(e);
+    private Dictionary<string, string> queries;
+
+    public void Dispose() => Interceptor.DisposeEvent();
+
+    protected async override Task OnInitializedAsync()
+    {
+        Interceptor.RegisterEvent();
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var authState = await AuthenticationStateTask;
+        if (!authState.User.Identity.IsAuthenticated)
+            return;
+
+        pageSizeOptions = new List<MatPageSizeOption>()
+    {
+             new MatPageSizeOption(TableStartViewCount),
+             new MatPageSizeOption(10),
+             new MatPageSizeOption(MaxPageSizeOption)
+        };
+
+        bookResponse = await Http.GetJsonAsync<PagedResponse<BookResponse>>(ApiRoutes.Books.Get);
+        cache = new ConcurrentDictionary<string, PagedResponse<BookResponse>>();
+        queries = new Dictionary<string, string>();
+
+        booksData = bookResponse.Data.Take(TableStartViewCount);
+        pageSize = TableStartViewCount;
+        last = (int)bookResponse.PageSize;
+        localOffset = last - TableStartViewCount;
+        cache.TryAdd($"{bookResponse.PageNumber}-{bookResponse.PageSize}-{query}", bookResponse);
+    }
+
+    async Task OnPage(MatPaginatorPageEvent e)
+    {
+        await FetchPage(e.PageSize, e.PageIndex);
+    }
+
+    private async Task FetchPage(int pageSize, int pageIndex)
+    {
+        booksData = this.pageIndex > pageIndex ?
+        await FetchPreviousPage(pageSize) :
+        await FetchNextPage(pageSize);
+
+        this.pageSize = pageSize;
+        this.pageIndex = pageIndex;
+    }
+
+    private async Task<List<BookResponse>> FetchPreviousPage(int pageSize)
+    {
+        var tempBooks = new List<BookResponse>();
+        localOffset += pageSize;
+        if (localOffset < last)
+        {
+            var take = localOffset < pageSize ? localOffset : pageSize;
+            tempBooks = bookResponse.Data.Skip((last - localOffset) - pageSize).Take(take).ToList();
+        }
+        if (tempBooks.Count < pageSize)
+        {
+            bookResponse = cache.GetOrAdd($"{bookResponse.PageNumber - 1}-{bookResponse.PageSize}-{query}",
+               await Http.GetJsonAsync<PagedResponse<BookResponse>>(bookResponse.PreviousPage));
+
+            var remainder = tempBooks.Count > pageSize ? (tempBooks.Count - pageSize) : pageSize;
+            tempBooks.AddRange(bookResponse.Data.Skip((int)bookResponse.PageSize - remainder).Take(remainder));
+            last = (int)bookResponse.PageSize;
+            localOffset = 0;
+        }
+        return tempBooks;
+    }
+
+    private async Task<List<BookResponse>> FetchNextPage(int pageSize, string query = null, int? offset = null)
+    {
+        var tempBooks = new List<BookResponse>();
+        localOffset = offset.HasValue ? (int)offset : localOffset;
+        var path = string.IsNullOrWhiteSpace(query) ? bookResponse.NextPage : $"{ApiRoutes.Books.Get}{query}";
+        if (localOffset > 0)
+        {
+            tempBooks = bookResponse.Data.Skip(last - localOffset).Take(pageSize).ToList();
+        }
+        if (tempBooks.Count < pageSize)
+        {
+            bookResponse = cache.GetOrAdd($"{bookResponse.PageNumber + 1}-{bookResponse.PageSize}-{query}",
+                await Http.GetJsonAsync<PagedResponse<BookResponse>>(path));
+
+            tempBooks.AddRange(bookResponse.Data.Take(pageSize - localOffset));
+            last = (int)bookResponse.PageSize;
+            localOffset = last;
+        }
+        localOffset -= pageSize;
+        return tempBooks;
+    }
+
+    private void NavigateToAddBook()
+    {
+        NavigationManager.NavigateTo("/books/add");
+    }
+
+    private void GetOrderState(string state, bool value)
+    {
+        query = state switch
+        {
+            QueryString.UpdatedDate => OrderByUpdatedDate(state, value),
+            _ => string.Empty
+        };
+        queries.AddOrUpdate(state, query.Replace("?", "&"));
+    }
+
+    private string OrderByUpdatedDate(string state, bool value)
+    {
+        bookResponse.Data = value ?
+            bookResponse.Data.OrderBy(o => o.UpdatedDate) :
+            bookResponse.Data.OrderByDescending(o => o.UpdatedDate);
+        string strValue = value ? "desc" : "asc";
+        return $"?OrderBy={strValue}:{state}";
+    }
+
+    private async Task HandleSearch()
+    {
+        var state = orderState == null ?
+             "Title" : orderState.Value.Item1;
+
+        var previous = string.Empty;
+        var other = queries.Where(x => x.Key != state);
+        foreach (var q in other)
+        {
+            previous += q.Value;
+        }
+
+        query = $"?{state}={queryString}{previous}";
+        queries.AddOrUpdate(state, query.Replace("?", "&"));
+
+        booksData = await FetchNextPage(pageSize, query, 0);
+        StateHasChanged();
+    }
+
+    private async Task OnSearchValue(string e)
+    {
+        queryString = e;
+        await HandleSearch();
+    }
+}
